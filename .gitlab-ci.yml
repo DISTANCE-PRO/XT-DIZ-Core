@@ -1,0 +1,31 @@
+include:
+- component: $CI_SERVER_FQDN/util/k8s-ci/kustomize@0.3.1
+  inputs:
+    prune: [ core/v1/Secret, core/v1/ConfigMap,
+             apps/v1/StatefulSet, apps/v1/Deployment,
+             core/v1/Service, networking.k8s.io/v1/Ingress,
+             networking.k8s.io/v1/NetworkPolicy ]
+
+# Add credentials secret via kustomize edit
+.app/apply:
+  before_script:
+  - kustomize edit add secret credentials
+    --from-literal=keycloak-admin-password="${KEYCLOAK_ADMIN_PASSWORD}"
+    --from-literal=frontend-auth-client-secret="${FRONTEND_AUTH_CLIENT_SECRET}"
+    --from-literal=frontend-auth-secret="${FRONTEND_AUTH_SECRET}"
+
+app/validate:
+  variables:
+    CI_ENVIRONMENT_SLUG: res
+
+app/deploy:test:
+  rules:
+  - when: never
+
+app/deploy:prod:
+  environment:
+    name: res
+  rules:
+  - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  - if: $CI_MERGE_REQUEST_LABELS =~ /hint::autodeploy/
+  - when: manual
