@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: term-server-frontend
+spec:
+  replicas: 2
+  revisionHistoryLimit: 2
+  selector: {}
+  template:
+    metadata:
+      labels:
+        app.life.uni-leipzig.de/redundancy: replicated
+        app.life.uni-leipzig.de/service-level: silver
+    spec:
+      enableServiceLinks: false
+      containers:
+      - name: blaze-frontend
+        image: ghcr.io/samply/blaze-frontend:1.5.0@sha256:b8cc545012b4b88d2704021ebf1f23ab0d362cee1e62bd95b0d49b23f9371772
+        ports:
+        - name: http
+          containerPort: 3000
+        env:
+        - name: ORIGIN
+          value: "https://tx.distance-xt.life.uni-leipzig.local"
+        - name: BACKEND_BASE_URL
+          value: "http://term-server"
+        - name: AUTH_CLIENT_ID
+          value: "tx-frontend"
+        - name: AUTH_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: credentials
+              key: frontend-auth-client-secret
+        - name: AUTH_ISSUER
+          value: "https://auth.distance-xt.life.uni-leipzig.local/realms/distance-xt"
+        - name: AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: credentials
+              key: frontend-auth-secret
+        - name: PROTOCOL_HEADER
+          value: "x-forwarded-proto"
+        - name: HOST_HEADER
+          value: "x-forwarded-host"
+        - name: NODE_EXTRA_CA_CERTS
+          value: /certificates/life-root-ca-2.pem
+        volumeMounts:
+        - name: ca-certs
+          mountPath: /certificates
+          readOnly: true
+        startupProbe:
+          httpGet:
+            path: /fhir
+            port: http
+          failureThreshold: 6
+        readinessProbe: &probe
+          httpGet:
+            path: /fhir
+            port: http
+        livenessProbe: *probe
+        resources:
+          requests:
+            cpu: "125m"
+            memory: "128Mi"
+          limits:
+            memory: "128Mi"
+      volumes:
+      - name: ca-certs
+        configMap:
+          name: life-ca-certs

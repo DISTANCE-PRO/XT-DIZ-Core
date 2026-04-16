@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: term-server
+spec:
+  selector: {}
+  serviceName: term-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.life.uni-leipzig.de/redundancy: none
+        app.life.uni-leipzig.de/service-level: silver
+    spec:
+      enableServiceLinks: false
+      containers:
+      - name: blaze
+        image: ghcr.io/samply/blaze:1.5.0@sha256:52a6f5b53d944e6060bae85161bbafb264a1b968f5d5008f8c47f5c98933823a
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: metrics
+          containerPort: 8081
+        env:
+        - name: JAVA_TOOL_OPTIONS
+          value: "-Xmx8g"
+        - name: ENABLE_ADMIN_API
+          value: "true"
+        - name: ENABLE_TERMINOLOGY_SERVICE
+          value: "true"
+        - name: ENABLE_TERMINOLOGY_LOINC
+          value: "true"
+        - name: ENABLE_TERMINOLOGY_SNOMED_CT
+          value: "true"
+        - name: SNOMED_CT_RELEASE_PATH
+          value: "/app/data/SnomedCT_InternationalRF2_PRODUCTION_20250701T120000Z"
+        - name: ENABLE_OPERATION_GRAPH
+          value: "true"
+        - name: DB_BLOCK_CACHE_SIZE
+          value: "2048"
+        - name: DB_RESOURCE_CACHE_SIZE
+          value: "10000"
+        - name: BASE_URL
+          value: "https://tx.distance-xt.life.uni-leipzig.local"
+        - name: OPENID_PROVIDER_URL
+          value: "https://auth.distance-xt.life.uni-leipzig.local/realms/distance-xt"
+        - name: CQL_EXPR_CACHE_SIZE
+          value: "128"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: USE_SYSTEM_CA_CERTS
+          value: "true"
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        - name: tmp
+          mountPath: /tmp
+          subPath: tmp
+        - name: ca-certs
+          mountPath: /certificates
+          readOnly: true
+        startupProbe:
+          httpGet: &probe
+            path: /health
+            port: 8080
+          failureThreshold: 6
+        livenessProbe:
+          httpGet: *probe
+        readinessProbe:
+          httpGet: *probe
+        resources:
+          requests:
+            cpu: "125m"
+            memory: "16Gi"
+          limits:
+            memory: "16Gi"
+        securityContext:
+          runAsNonRoot: true
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+      volumes:
+      - name: tmp
+        emptyDir:
+          medium: Memory
+          sizeLimit: 64Mi
+      - name: ca-certs
+        configMap:
+          name: life-ca-certs
+          items:
+          - key: life-root-ca-2.pem
+            path: life-root-ca-2.crt
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      storageClassName: vsan
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 200Gi
