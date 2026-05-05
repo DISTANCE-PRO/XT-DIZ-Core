@@ -1,40 +1,29 @@
-# distance-xt-core
+# DISTANCE:PRO XT — Core Services
 
-Shared services for the distance-xt platform, consumed by every `diz` instance.
+Shared platform services consumed by every participating rollout partner (DIZ) in the DISTANCE:PRO XT network.
 
-Namespace: `distance-xt-core`
+## Introduction
 
-## Components
+This repository deploys the central infrastructure that all sites depend on:
 
-- **term-server** — Blaze configured as a terminology server (LOINC + SNOMED-CT), with frontend.
-  - Backend: `https://tx.distance-xt.life.uni-leipzig.local/fhir`
-- **keycloak** — OIDC for the platform.
-  - `https://auth.distance-xt.life.uni-leipzig.local`
-  - Realm (planned): `distance-xt`
+- **Terminology Server** — A [Blaze](https://github.com/samply/blaze) FHIR server configured to serve medical
+  terminologies (LOINC and SNOMED CT). Provides a web frontend for browsing and querying terminology content.
+- **Identity Provider** — A [Keycloak](https://www.keycloak.org/) instance providing single sign-on (OIDC) for the
+  entire platform. All other services authenticate users and service accounts through this central identity provider.
 
-## Required CI variables
+## Technology
 
-The `credentials` secret is assembled by CI (`.app/apply` in `.gitlab-ci.yml`)
-from these GitLab CI/CD variables:
+| Component          | Technology             | Purpose                              |
+|--------------------|------------------------|--------------------------------------|
+| Terminology Server | Blaze (FHIR R4)        | Serves LOINC + SNOMED CT terminology |
+| Identity Provider  | Keycloak               | OpenID Connect authentication        |
+| Orchestration      | Kubernetes / Kustomize | Deployment and configuration         |
+| CI/CD              | GitLab CI              | Automated deployment pipeline        |
 
-- `KEYCLOAK_ADMIN_PASSWORD`
-- `FRONTEND_AUTH_CLIENT_SECRET`
-- `FRONTEND_AUTH_SECRET` (random, e.g. `openssl rand -hex 32`)
+## Architecture Context
 
-## Deploy
+This is one of three repositories that make up the DISTANCE:PRO XT platform:
 
-Via the shared kustomize CI component (`util/k8s-ci/kustomize@0.3.1`). The
-`app/deploy:prod` job runs automatically on the default branch and on MRs
-labelled `hint::autodeploy`; otherwise it's manual.
-
-## SNOMED CT release
-
-The term-server StatefulSet expects a SNOMED CT release directory at
-`/app/data/SnomedCT_Germany-EditionRelease_PRODUCTION_20241115T120000Z`. Load it
-into the `data` PVC before the pod can serve terminology requests.
-
-## Open items
-
-- SNOMED CT release version pinning and upload procedure.
-- Keycloak realm + clients (`tx-frontend`, per-DIZ clients). Consider realm import instead of `start-dev`.
-- Replace Keycloak `start-dev` + H2 with a production setup (external DB, `start`) before prod use.
+- **core** (this repo) — Shared terminology and authentication services
+- **[trust-center](../trust-center)** — Consent management and pseudonymization
+- **[diz](../diz)** — Per-site data integration (one instance per rollout partner)
