@@ -5,6 +5,12 @@ include:
              apps/v1/StatefulSet, apps/v1/Deployment,
              core/v1/Service, networking.k8s.io/v1/Ingress,
              networking.k8s.io/v1/NetworkPolicy ]
+- component: ${CI_SERVER_FQDN}/util/terraform-component/validate@main
+  inputs:
+    stage: test
+- component: ${CI_SERVER_FQDN}/util/terraform-component/plan@main
+  inputs:
+    stage: deploy
 
 # Add credentials secret via kustomize edit
 .app/apply:
