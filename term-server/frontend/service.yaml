@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: term-server-frontend
+  name: frontend
 spec:
   ports:
   - name: http

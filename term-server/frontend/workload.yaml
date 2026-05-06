@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: term-server-frontend
+  name: frontend
 spec:
   replicas: 2
   revisionHistoryLimit: 2
@@ -23,7 +23,7 @@ spec:
         - name: ORIGIN
           value: "https://tx.distance-xt.life.uni-leipzig.local"
         - name: BACKEND_BASE_URL
-          value: "http://term-server"
+          value: "http://term-server-backend"
         - name: AUTH_CLIENT_ID
           value: "tx-frontend"
         - name: AUTH_CLIENT_SECRET

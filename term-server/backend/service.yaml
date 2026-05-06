@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: term-server
+  name: backend
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: "8081"

@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: term-server
+  name: backend
 spec:
   selector: {}
-  serviceName: term-server
+  serviceName: backend
   replicas: 1
   template:
     metadata:
