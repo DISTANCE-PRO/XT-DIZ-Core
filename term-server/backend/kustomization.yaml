@@ -8,6 +8,6 @@ labels:
     app.kubernetes.io/component: backend
 
 resources:
-- svc.yml
-- sts.yml
-- ing.yml
+- workload.yaml
+- service.yaml
+- ingress.yaml
