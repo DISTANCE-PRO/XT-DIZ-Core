@@ -15,7 +15,7 @@ spec:
       enableServiceLinks: false
       containers:
       - name: blaze
-        image: ghcr.io/samply/blaze:1.5.0@sha256:52a6f5b53d944e6060bae85161bbafb264a1b968f5d5008f8c47f5c98933823a
+        image: ghcr.io/samply/blaze:1.7.0@sha256:f2e87759605587eaf9cbbf86e229938019a732bb908d4e59f107a2744e73825f
         ports:
         - name: http
           containerPort: 8080
@@ -44,6 +44,10 @@ spec:
           value: "https://tx.distance-xt.life.uni-leipzig.local"
         - name: OPENID_PROVIDER_URL
           value: "https://auth.distance-xt.life.uni-leipzig.local/realms/distance-xt"
+        - name: OPENID_PROVIDER_ISSUER
+          value: "https://auth.distance-xt.life.uni-leipzig.local/realms/distance-xt"
+        - name: OPENID_AUDIENCE
+          value: "term-server"
         - name: CQL_EXPR_CACHE_SIZE
           value: "128"
         - name: LOG_LEVEL
