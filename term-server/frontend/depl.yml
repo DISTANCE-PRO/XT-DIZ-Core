@@ -29,14 +29,14 @@ spec:
         - name: AUTH_CLIENT_SECRET
           valueFrom:
             secretKeyRef:
-              name: credentials
+              name: term-server-credentials
               key: frontend-auth-client-secret
         - name: AUTH_ISSUER
           value: "https://auth.distance-xt.life.uni-leipzig.local/realms/distance-xt"
         - name: AUTH_SECRET
           valueFrom:
             secretKeyRef:
-              name: credentials
+              name: term-server-credentials
               key: frontend-auth-secret
         - name: PROTOCOL_HEADER
           value: "x-forwarded-proto"

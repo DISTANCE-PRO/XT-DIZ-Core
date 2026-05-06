@@ -15,10 +15,13 @@ include:
 # Add credentials secret via kustomize edit
 .app/apply:
   before_script:
-  - kustomize edit add secret credentials
+  - kustomize edit add secret keycloak-credentials
     --from-literal=keycloak-admin-password="${KEYCLOAK_ADMIN_PASSWORD}"
+  - kustomize edit add secret term-server-credentials
     --from-literal=frontend-auth-client-secret="${FRONTEND_AUTH_CLIENT_SECRET}"
     --from-literal=frontend-auth-secret="${FRONTEND_AUTH_SECRET}"
+  - kustomize edit add secret keycloak-db-credentials
+    --from-literal=password="${KEYCLOAK_DB_PASSWORD}"
 
 app/validate:
   variables:
