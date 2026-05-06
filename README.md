@@ -27,3 +27,23 @@ This is one of three repositories that make up the DISTANCE:PRO XT platform:
 - **core** (this repo) — Shared terminology and authentication services
 - **[trust-center](../trust-center)** — Consent management and pseudonymization
 - **[diz](../diz)** — Per-site data integration (one instance per rollout partner)
+
+## Keycloak Configuration (Terraform)
+
+Keycloak resources are managed as code using the terraform and the official [Keycloak provider][keycloak-provider].
+This replaces manual realm/client configuration via the Keycloak admin UI.
+
+### Design
+
+This repo owns the **realm** and any clients that belong to core services:
+
+| Resource                             | Purpose                                                        |
+|--------------------------------------|----------------------------------------------------------------|
+| `keycloak_realm.distance_xt`         | The shared `distance-xt` realm used by all platform components |
+| `keycloak_openid_client.tx_frontend` | OIDC client for the terminology server frontend                |
+
+Other repos (e.g. trust-center) reference this realm via a `data` source, ensuring a single
+source of truth for realm-level settings while allowing each repo to manage its own clients
+and roles independently.
+
+[keycloak-provider]: https://registry.terraform.io/providers/keycloak/keycloak/latest/docs
