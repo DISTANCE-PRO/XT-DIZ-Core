@@ -31,7 +31,6 @@ This is one of three repositories that make up the DISTANCE:PRO XT platform:
 ## Keycloak Configuration (Terraform)
 
 Keycloak resources are managed as code using the terraform and the official [Keycloak provider][keycloak-provider].
-This replaces manual realm/client configuration via the Keycloak admin UI.
 
 ### Design
 
