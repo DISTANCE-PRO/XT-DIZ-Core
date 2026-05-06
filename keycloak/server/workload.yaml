@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+spec:
+  selector: { }
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app.life.uni-leipzig.de/redundancy: replicated
+        app.life.uni-leipzig.de/service-level: gold
+    spec:
+      enableServiceLinks: false
+      containers:
+      - name: keycloak
+        image: quay.io/keycloak/keycloak:26.6.1@sha256:26ae26445475f7fac5f90ee138b1bdb64324f5815fb16133ffdbdb122d97c4d8
+        args: [ "start" ]
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: management
+          containerPort: 9000
+        env:
+        - name: KEYCLOAK_ADMIN
+          value: "admin"
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-credentials
+              key: keycloak-admin-password
+        - name: KC_HOSTNAME
+          value: "https://auth.distance-xt.life.uni-leipzig.local"
+        - name: KC_HOSTNAME_ADMIN
+          value: "https://auth.distance-xt.life.uni-leipzig.local"
+        - name: KC_PROXY_HEADERS
+          value: "xforwarded"
+        - name: KC_HTTP_ENABLED
+          value: "true"
+        - name: KC_HEALTH_ENABLED
+          value: "true"
+        - name: KC_DB
+          value: "postgres"
+        - name: KC_DB_URL_HOST
+          value: "keycloak-db"
+        - name: KC_DB_USERNAME
+          value: "keycloak"
+        - name: KC_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-db-credentials
+              key: password
+        - name: KC_LOG_LEVEL
+          value: "info"
+        startupProbe:
+          httpGet:
+            path: /health/started
+            port: management
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: management
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: management
+        resources:
+          requests:
+            cpu: "125m"
+            memory: "1Gi"
+          limits:
+            memory: "1Gi"

@@ -1,0 +1,74 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup
+spec:
+  schedule: "0 4 * * *"
+  timeZone: Europe/Berlin
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app.life.uni-leipzig.de/service-level: gold
+            app.life.uni-leipzig.de/redundancy: none
+        spec:
+          containers:
+          - name: db-backup
+            image: postgres:18.1-alpine
+            command: [ "/bin/sh", "-c" ]
+            args:
+            - pg_dump --dbname ${PGUSER} --no-owner --no-privileges | gzip > /backup/db-$(date +%Y%m%d-%H%M%S).sql.gz
+            env:
+            - name: PGHOST
+              value: keycloak-db
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-db-credentials
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: password
+            volumeMounts:
+            - name: backup
+              mountPath: /backup
+            resources:
+              requests:
+                cpu: "250m"
+                memory: "64Mi"
+              limits:
+                memory: "64Mi"
+
+          - name: rotate-backups
+            image: math2306/rotated-delete:8.1@sha256:06b8a318430e3f6a64e30eec2d39de27335abcb3982e1a99ea1b00b7c775c5ea
+            command:
+            - /bin/sh
+            - -ec
+            - |
+              sleep 10
+              /usr/local/bin/rotate-backups --daily=7 \
+                                            --weekly=3 \
+                                            --monthly=6 \
+                                            --yearly=2 \
+                                            --timestamp-pattern='(?P<year>[0-9]{4})(?P<month>[0-9]{2})(?P<day>[0-9]{2})' \
+                                            --include="db-*.sql.gz" \
+                                            /backup
+            volumeMounts:
+            - name: backup
+              mountPath: /backup
+            resources:
+              requests:
+                cpu: "250m"
+                memory: "64Mi"
+              limits:
+                memory: "64Mi"
+
+          restartPolicy: OnFailure
+          volumes:
+          - name: backup
+            persistentVolumeClaim:
+              claimName: backup

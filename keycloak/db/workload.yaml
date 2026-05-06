@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db
+spec:
+  serviceName: db
+  replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  revisionHistoryLimit: 2
+  selector: { }
+  template:
+    metadata:
+      labels:
+        app.life.uni-leipzig.de/service-level: gold
+        app.life.uni-leipzig.de/redundancy: none
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:18.1-alpine
+        ports:
+        - name: postgres
+          containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "keycloak"
+        - name: POSTGRES_USER
+          value: "keycloak"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-db-credentials
+              key: password
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql
+          subPath: postgresql
+        startupProbe: &probe
+          exec:
+            command: [ "pg_isready", "-U", "keycloak" ]
+        livenessProbe: *probe
+        readinessProbe: *probe
+        resources:
+          requests:
+            cpu: "25m"
+            memory: "256Mi"
+          limits:
+            memory: "256Mi"
+      securityContext:
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      storageClassName: vsan
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
