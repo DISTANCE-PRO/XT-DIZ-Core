@@ -15,3 +15,11 @@ resource "keycloak_openid_client" "tx_frontend" {
   access_type           = "CONFIDENTIAL"
   standard_flow_enabled = true
 }
+
+resource "keycloak_openid_audience_protocol_mapper" "tx_frontend_audience" {
+  realm_id                 = keycloak_realm.distance_xt.id
+  client_id                = keycloak_openid_client.tx_frontend.id
+  name                     = "term-server"
+  included_custom_audience = "term-server"
+  add_to_id_token          = false
+}

@@ -15,7 +15,7 @@ spec:
       enableServiceLinks: false
       containers:
       - name: blaze-frontend
-        image: ghcr.io/samply/blaze-frontend:1.5.0@sha256:b8cc545012b4b88d2704021ebf1f23ab0d362cee1e62bd95b0d49b23f9371772
+        image: ghcr.io/samply/blaze-frontend:1.7.0@sha256:2d6ecc56e577eccc10e5d964a45049cf83cf29ada185ad8318b8f19eea566978
         ports:
         - name: http
           containerPort: 3000
