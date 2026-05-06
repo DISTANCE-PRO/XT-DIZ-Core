@@ -3,7 +3,7 @@ kind: StatefulSet
 metadata:
   name: backend
 spec:
-  selector: {}
+  selector: { }
   serviceName: backend
   replicas: 1
   template:
@@ -13,6 +13,36 @@ spec:
         app.life.uni-leipzig.de/service-level: silver
     spec:
       enableServiceLinks: false
+      initContainers:
+      - name: download-snomed-ct
+        image: busybox:1.37
+        command: [ "sh", "-ec" ]
+        args:
+        - |
+          if [ -d "/app/data/${SNOMED_CT_RELEASE_NAME}" ]; then
+            echo "Release ${SNOMED_CT_RELEASE_NAME} already present, skipping download."
+            exit 0
+          fi
+          echo "Downloading SNOMED CT release from ${SNOMED_CT_RELEASE_NAME}..."
+          wget -q -O /tmp/snomed-ct-release.tar.gz "https://s3.life.uni-leipzig.local/internal/${SNOMED_CT_RELEASE_NAME}.tar.gz"
+          echo "Extracting..."
+          tar -xzf /tmp/snomed-ct-release.tar.gz -C /app/data
+          rm /tmp/snomed-ct-release.tar.gz
+          echo "Done."
+        env:
+        - name: SNOMED_CT_RELEASE_NAME
+          value: "SnomedCT_InternationalRF2_PRODUCTION_20250701T120000Z"
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        - name: download
+          mountPath: /tmp
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            memory: "256Mi"
       containers:
       - name: blaze
         image: ghcr.io/samply/blaze:1.7.0@sha256:f2e87759605587eaf9cbbf86e229938019a732bb908d4e59f107a2744e73825f
@@ -87,6 +117,9 @@ spec:
         emptyDir:
           medium: Memory
           sizeLimit: 64Mi
+      - name: download
+        emptyDir:
+          sizeLimit: 1Gi
       - name: ca-certs
         configMap:
           name: life-ca-certs
