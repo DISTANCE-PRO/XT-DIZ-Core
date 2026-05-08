@@ -8,4 +8,4 @@ labels:
 resources:
 - term-server/
 - keycloak/
-- netpol.yaml
+- netpols/
