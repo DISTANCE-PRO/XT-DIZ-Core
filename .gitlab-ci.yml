@@ -1,5 +1,5 @@
 include:
-- component: $CI_SERVER_FQDN/util/k8s-ci/kustomize@0.3.1
+- component: $CI_SERVER_FQDN/util/k8s-ci/kustomize@1
   inputs:
     prune: [ core/v1/Secret, core/v1/ConfigMap,
              apps/v1/StatefulSet, apps/v1/Deployment,
@@ -14,7 +14,7 @@ include:
     stage: deploy
 
 # Add credentials secret via kustomize edit
-.app/apply:
+.kube/apply:
   before_script:
   - kustomize edit add secret keycloak-credentials
     --from-literal=keycloak-admin-password="${KEYCLOAK_ADMIN_PASSWORD}"
@@ -24,15 +24,15 @@ include:
   - kustomize edit add secret keycloak-db-credentials
     --from-literal=password="${KEYCLOAK_DB_PASSWORD}"
 
-app/validate:
+kube/validate:
   variables:
     CI_ENVIRONMENT_SLUG: res
 
-app/deploy:test:
+kube/deploy:test:
   rules:
   - when: never
 
-app/deploy:prod:
+kube/deploy:prod:
   environment:
     name: res
   rules:
